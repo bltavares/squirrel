@@ -7,27 +7,6 @@ import (
 	"database/sql"
 )
 
-// Execer is the interface that wraps the Exec method.
-//
-// Exec executes the given query as implemented by database/sql.Exec.
-type Execer interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-}
-
-// Queryer is the interface that wraps the Query method.
-//
-// Query executes the given query as implemented by database/sql.Query.
-type Queryer interface {
-	Query(query string, args ...interface{}) (*sql.Rows, error)
-}
-
-// QueryRower is the interface that wraps the QueryRow method.
-//
-// QueryRow executes the given query as implemented by database/sql.QueryRow.
-type QueryRower interface {
-	QueryRow(query string, args ...interface{}) RowScanner
-}
-
 type DbRunnerWithContext struct {
 	ctx    context.Context
 	runner *dbRunner
@@ -41,7 +20,7 @@ func (r *dbRunner) WithContext(ctx context.Context) DbRunnerWithContext {
 }
 
 func (r DbRunnerWithContext) QueryRow(query string, args ...interface{}) RowScanner {
-	return r.runner.DB.WithContext(r.ctx).QueryRow(query, args...)
+	return r.runner.DB.QueryRowContext(r.ctx, query, args...)
 }
 
 type TxRunnerWithContext struct {
@@ -56,8 +35,25 @@ func (r *txRunner) WithContext(ctx context.Context) TxRunnerWithContext {
 	}
 }
 
-func (r *TxRunnerWithContext) QueryRow(query string, args ...interface{}) RowScanner {
-	return r.runner.Tx.WithContext(r.ctx).QueryRow(query, args...)
+func (r TxRunnerWithContext) QueryRow(ctx context.Context, query string, args ...interface{}) RowScanner {
+	return r.runner.Tx.QueryRowContext(r.ctx, query, args...)
+
+}
+
+type ContextAwareExec struct {
+	ctx    context.Context
+	execer Execer
+}
+
+func (e Execer) WithContext(ctx context.Context) ContextAwareExec {
+	return ContextAwareExec{
+		ctx:    ctx,
+		execer: e,
+	}
+}
+
+func (e ContextAwareExec) Exec() (res sql.Result, err error) {
+	return nil, nil
 }
 
 // ExecContextWith ExecContexts the SQL returned by s with db.
@@ -66,7 +62,7 @@ func ExecContextWith(ctx context.Context, db Execer, s Sqlizer) (res sql.Result,
 	if err != nil {
 		return
 	}
-	return db.WithContext(ctx).Exec(ctx, query, args...)
+	return db.WithContext(ctx).Exec(query, args...)
 }
 
 // QueryContextWith QueryContexts the SQL returned by s with db.
