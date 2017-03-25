@@ -41,19 +41,6 @@ type QueryRower interface {
 	QueryRow(query string, args ...interface{}) RowScanner
 }
 
-// BaseRunner groups the Execer and Queryer interfaces.
-type BaseRunner interface {
-	Execer
-	Queryer
-}
-
-// Runner groups the Execer, Queryer, and QueryRower interfaces.
-type Runner interface {
-	Execer
-	Queryer
-	QueryRower
-}
-
 // DBRunner wraps sql.DB to implement Runner.
 type dbRunner struct {
 	*sql.DB

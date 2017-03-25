@@ -7,6 +7,24 @@ import (
 	"database/sql"
 )
 
+// BaseRunner groups the Execer and Queryer interfaces.
+type BaseRunner interface {
+	Execer
+	ContextAwareExecer
+	Queryer
+	ContextAwareQueryer
+}
+
+// Runner groups the Execer, Queryer, and QueryRower interfaces.
+type Runner interface {
+	Execer
+	ContextAwareExecer
+	Queryer
+	ContextAwareQueryer
+	QueryRower
+	ContextAwareQueryRower
+}
+
 // Execer is the interface that wraps the Exec method.
 //
 // Exec executes the given query as implemented by database/sql.Exec.
@@ -33,10 +51,6 @@ func (r *dbRunner) QueryRowContext(ctx context.Context, query string, args ...in
 }
 
 func (r *txRunner) QueryRowContext(ctx context.Context, query string, args ...interface{}) RowScanner {
-	return r.Tx.QueryRowContext(ctx, query, args...)
-}
-
-func (r BaseRunner) ExecContext(ctx context.Context, query string, args ...interface{}) RowScanner {
 	return r.Tx.QueryRowContext(ctx, query, args...)
 }
 
