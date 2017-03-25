@@ -34,7 +34,7 @@ type DbRunnerWithContext struct {
 }
 
 func (r *dbRunner) WithContext(ctx context.Context) DbRunnerWithContext {
-	DbRunnerWithContext{
+	return DbRunnerWithContext{
 		ctx:    ctx,
 		runner: r,
 	}
@@ -50,13 +50,13 @@ type TxRunnerWithContext struct {
 }
 
 func (r *txRunner) WithContext(ctx context.Context) TxRunnerWithContext {
-	TxRunnerWithContext{
+	return TxRunnerWithContext{
 		ctx:    ctx,
 		runner: r,
 	}
 }
 
-func (r *txRunner) QueryRow(query string, args ...interface{}) RowScanner {
+func (r *TxRunnerWithContext) QueryRow(query string, args ...interface{}) RowScanner {
 	return r.runner.Tx.WithContext(r.ctx).QueryRow(query, args...)
 }
 

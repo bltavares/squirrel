@@ -13,7 +13,7 @@ type StmtCacherWithContext struct {
 }
 
 func (sc *stmtCacher) WithContext(ctx context.Context) StmtCacherWithContext {
-	StmtCacherWithContext{
+	return StmtCacherWithContext{
 		ctx:    ctx,
 		cacher: sc,
 	}
@@ -24,6 +24,7 @@ func (sc StmtCacherWithContext) Exec(query string, args ...interface{}) (res sql
 	if err != nil {
 		return
 	}
+
 	return stmt.WithContext(sc.ctx).Exec(args...)
 }
 

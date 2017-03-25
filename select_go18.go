@@ -15,7 +15,7 @@ type SelectDataWithContext struct {
 }
 
 func (d *selectData) WithContext(ctx context.Context) SelectDataWithContext {
-	SelectDataWithContext{
+	return SelectDataWithContext{
 		ctx:  ctx,
 		data: d,
 	}
@@ -52,7 +52,7 @@ type SelectBuilderWithContext struct {
 }
 
 func (b SelectBuilder) WithContext(ctx context.Context) SelectBuilderWithContext {
-	SelectBuilderWithContext{
+	return SelectBuilderWithContext{
 		ctx:     ctx,
 		builder: b,
 	}
