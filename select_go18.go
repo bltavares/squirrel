@@ -27,7 +27,7 @@ func (d *selectData) QueryRowContext(ctx context.Context) RowScanner {
 	if d.RunWith == nil {
 		return &Row{err: RunnerNotSet}
 	}
-	queryRower, ok := d.RunWith.(QueryRower)
+	queryRower, ok := d.RunWith.(ContextAwareQueryRower)
 	if !ok {
 		return &Row{err: RunnerNotQueryRunner}
 	}

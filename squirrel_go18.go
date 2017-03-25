@@ -10,24 +10,21 @@ import (
 // Execer is the interface that wraps the Exec method.
 //
 // Exec executes the given query as implemented by database/sql.Exec.
-type Execer interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
+type ContextAwareExecer interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 }
 
 // Queryer is the interface that wraps the Query method.
 //
 // Query executes the given query as implemented by database/sql.Query.
-type Queryer interface {
-	Query(query string, args ...interface{}) (*sql.Rows, error)
+type ContextAwareQueryer interface {
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 }
 
 // QueryRower is the interface that wraps the QueryRow method.
 //
 // QueryRow executes the given query as implemented by database/sql.QueryRow.
-type QueryRower interface {
-	QueryRow(query string, args ...interface{}) RowScanner
+type ContextAwareQueryRower interface {
 	QueryRowContext(ctx context.Context, query string, args ...interface{}) RowScanner
 }
 
@@ -39,8 +36,12 @@ func (r *txRunner) QueryRowContext(ctx context.Context, query string, args ...in
 	return r.Tx.QueryRowContext(ctx, query, args...)
 }
 
+func (r BaseRunner) ExecContext(ctx context.Context, query string, args ...interface{}) RowScanner {
+	return r.Tx.QueryRowContext(ctx, query, args...)
+}
+
 // ExecContextWith ExecContexts the SQL returned by s with db.
-func ExecContextWith(ctx context.Context, db Execer, s Sqlizer) (res sql.Result, err error) {
+func ExecContextWith(ctx context.Context, db ContextAwareExecer, s Sqlizer) (res sql.Result, err error) {
 	query, args, err := s.ToSql()
 	if err != nil {
 		return
@@ -49,7 +50,7 @@ func ExecContextWith(ctx context.Context, db Execer, s Sqlizer) (res sql.Result,
 }
 
 // QueryContextWith QueryContexts the SQL returned by s with db.
-func QueryContextWith(ctx context.Context, db Queryer, s Sqlizer) (rows *sql.Rows, err error) {
+func QueryContextWith(ctx context.Context, db ContextAwareQueryer, s Sqlizer) (rows *sql.Rows, err error) {
 	query, args, err := s.ToSql()
 	if err != nil {
 		return
@@ -58,7 +59,7 @@ func QueryContextWith(ctx context.Context, db Queryer, s Sqlizer) (rows *sql.Row
 }
 
 // QueryRowContextWith QueryRowContexts the SQL returned by s with db.
-func QueryRowContextWith(ctx context.Context, db QueryRower, s Sqlizer) RowScanner {
+func QueryRowContextWith(ctx context.Context, db ContextAwareQueryRower, s Sqlizer) RowScanner {
 	query, args, err := s.ToSql()
 	return &Row{RowScanner: db.QueryRowContext(ctx, query, args...), err: err}
 }
