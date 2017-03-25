@@ -28,12 +28,36 @@ type QueryRower interface {
 	QueryRow(query string, args ...interface{}) RowScanner
 }
 
-func (r *dbRunner) QueryRowContext(ctx context.Context, query string, args ...interface{}) RowScanner {
-	return r.DB.QueryRowContext(ctx, query, args...)
+type DbRunnerWithContext struct {
+	ctx    context.Context
+	runner *dbRunner
 }
 
-func (r *txRunner) QueryRowContext(ctx context.Context, query string, args ...interface{}) RowScanner {
-	return r.Tx.QueryRowContext(ctx, query, args...)
+func (r *dbRunner) WithContext(ctx context.Context) DbRunnerWithContext {
+	DbRunnerWithContext{
+		ctx:    ctx,
+		runner: r,
+	}
+}
+
+func (r DbRunnerWithContext) QueryRow(query string, args ...interface{}) RowScanner {
+	return r.runner.DB.WithContext(r.ctx).QueryRow(query, args...)
+}
+
+type TxRunnerWithContext struct {
+	ctx    context.Context
+	runner *txRunner
+}
+
+func (r *txRunner) WithContext(ctx context.Context) TxRunnerWithContext {
+	TxRunnerWithContext{
+		ctx:    ctx,
+		runner: r,
+	}
+}
+
+func (r *txRunner) QueryRow(query string, args ...interface{}) RowScanner {
+	return r.runner.Tx.WithContext(r.ctx).QueryRow(query, args...)
 }
 
 // ExecContextWith ExecContexts the SQL returned by s with db.
@@ -42,7 +66,7 @@ func ExecContextWith(ctx context.Context, db Execer, s Sqlizer) (res sql.Result,
 	if err != nil {
 		return
 	}
-	return db.ExecContext(ctx, query, args...)
+	return db.WithContext(ctx).Exec(ctx, query, args...)
 }
 
 // QueryContextWith QueryContexts the SQL returned by s with db.
@@ -51,11 +75,11 @@ func QueryContextWith(ctx context.Context, db Queryer, s Sqlizer) (rows *sql.Row
 	if err != nil {
 		return
 	}
-	return db.QueryContext(ctx, query, args...)
+	return db.WithContext(ctx).Query(query, args...)
 }
 
 // QueryRowContextWith QueryRowContexts the SQL returned by s with db.
 func QueryRowContextWith(ctx context.Context, db QueryRower, s Sqlizer) RowScanner {
 	query, args, err := s.ToSql()
-	return &Row{RowScanner: db.QueryRowContext(ctx, query, args...), err: err}
+	return &Row{RowScanner: db.WithContext(ctx).QueryRow(query, args...), err: err}
 }
